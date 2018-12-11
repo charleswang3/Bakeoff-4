@@ -117,22 +117,22 @@ void drawTriangles(int i)
     fill(0, 0, 0);
   
   if (i==0){
-    if (accelerometer.x < -2 && accelerometer.y >= -1 && accelerometer.y <= 1)
+    if (accelerometer.x < -3)
       fill(75, 229, 134);
     triangle(width/2, 70, width/2+50, 120, width/2-50, 120);
   }
   else if (i==1){
-    if (accelerometer.y > 2 && accelerometer.x >= -1 && accelerometer.x <= 1)
+    if (accelerometer.y > 3)
       fill(75, 229, 134);
     triangle(880-50, 500/2, 880-100, 500/2+50, 880-100, 500/2-50);
   }
   else if (i==2){
-    if (accelerometer.x > 2 && accelerometer.y >= -1 && accelerometer.y <= 1)
+    if (accelerometer.x > 3)
       fill(75, 229, 134);
     triangle(width/2, 500-70, width/2+50, 500-120, width/2-50, 500-120);
   }
   else{
-    if (accelerometer.y < -2 && accelerometer.x >= -1 && accelerometer.x <= 1)
+    if (accelerometer.y < -3)
       fill(75, 229, 134);
     triangle(20, 500/2, 70, 500/2+50, 70, 500/2-50);
   }
@@ -212,13 +212,13 @@ void lightTapping() {
 // Check if target choose 4 hit
 int hitTest() 
 {
-  if (accelerometer.x < 0 && accelerometer.y >= -1 && accelerometer.y <= 1)
+  if (accelerometer.x < -3)
     return 0;
-  else if (accelerometer.y > 0 && accelerometer.x >= -1 && accelerometer.x <= 1)
+  else if (accelerometer.y > 3)
     return 1;
-  else if (accelerometer.x > 0 && accelerometer.y >= -1 && accelerometer.y <= 1)
+  else if (accelerometer.x > 3)
     return 2;
-  else if (accelerometer.y < 0 && accelerometer.x >= -1 && accelerometer.x <= 1)
+  else if (accelerometer.y < -3)
     return 3;
   else   
     return -1;
