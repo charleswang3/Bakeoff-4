@@ -5,9 +5,15 @@ import ketai.sensors.*;
 KetaiSensor sensor;
 
 float cursorX, cursorY;
-float light = 0; 
-float proxSensorThreshold = 20; //you will need to change this per your device.
 PVector accelerometer;
+boolean correct = false;
+
+// LIGHT VARIABLES
+boolean pressedDown = false;
+int taps = 0;
+int lastTap = 0;
+float light = 0; 
+float proxSensorThreshold = 10; //you will need to change this per your device. //you will need to change this per your device.
 
 private class Target
 {
@@ -26,7 +32,7 @@ int countDownTimerWait = 0;
 
 void setup() {
   size(880, 540); //you can change this to be fullscreen
-  frameRate(60);
+  frameRate(1000);
   sensor = new KetaiSensor(this);
   sensor.start();
   accelerometer = new PVector();
@@ -58,8 +64,8 @@ void draw() {
 
   countDownTimerWait--;
 
-  if (startTime == 0)
-    startTime = millis();
+  //if (startTime == 0)
+  //  rect(width/2, height/2, 150, 150);
 
   if (index>=targets.size() && !userDone)
   {
@@ -74,19 +80,32 @@ void draw() {
     return;
   }
   
-  // Draw Rectangles
-  for (int i=0; i<4; i++)
-    drawTriangles(i);
+  if (startTime > 0) {
+    // Draw Rectangles
+    for (int i=0; i<4; i++)
+      drawTriangles(i);
+    
+  
+    fill(255);//white
+    text("Trial " + (index+1) + " of " +trialCount, width/2, 540/2-50);
+    text("Target #" + (targets.get(index).target)+1, width/2, 540/2);
+  
+    if (targets.get(index).action==0)
+      text("1", width/2, 150);
+    else
+      text("2", width/2, 150);
+      
+   
+    // totally not drawing anything but oh well
+    lightTapping();
+  } else {
+    text("Tap to begin", width/2, 540/2-50);
+  }
+}
 
-
-  fill(255);//white
-  text("Trial " + (index+1) + " of " +trialCount, width/2, 540/2-50);
-  text("Target #" + (targets.get(index).target)+1, width/2, 540/2);
-
-  if (targets.get(index).action==0)
-    text("UP", width/2, 150);
-  else
-    text("DOWN", width/2, 150);
+void mousePressed() {
+  if (startTime == 0)
+   startTime = millis(); 
 }
 
 void drawTriangles(int i)
@@ -98,22 +117,22 @@ void drawTriangles(int i)
     fill(0, 0, 0);
   
   if (i==0){
-    if (accelerometer.x < 0 && accelerometer.y >= -1 && accelerometer.y <= 1)
+    if (accelerometer.x < -2 && accelerometer.y >= -1 && accelerometer.y <= 1)
       fill(75, 229, 134);
     triangle(width/2, 70, width/2+50, 120, width/2-50, 120);
   }
   else if (i==1){
-    if (accelerometer.y > 0 && accelerometer.x >= -1 && accelerometer.x <= 1)
+    if (accelerometer.y > 2 && accelerometer.x >= -1 && accelerometer.x <= 1)
       fill(75, 229, 134);
     triangle(880-50, 500/2, 880-100, 500/2+50, 880-100, 500/2-50);
   }
   else if (i==2){
-    if (accelerometer.x > 0 && accelerometer.y >= -1 && accelerometer.y <= 1)
+    if (accelerometer.x > 2 && accelerometer.y >= -1 && accelerometer.y <= 1)
       fill(75, 229, 134);
     triangle(width/2, 500-70, width/2+50, 500-120, width/2-50, 500-120);
   }
   else{
-    if (accelerometer.y < 0 && accelerometer.x >= -1 && accelerometer.x <= 1)
+    if (accelerometer.y < -2 && accelerometer.x >= -1 && accelerometer.x <= 1)
       fill(75, 229, 134);
     triangle(20, 500/2, 70, 500/2+50, 70, 500/2-50);
   }
@@ -129,58 +148,67 @@ void onAccelerometerEvent(float x, float y, float z)
   if (userDone || index>=targets.size())
     return;
 
-
   Target t = targets.get(index);
 
   if (t==null)
     return;
-   
    if (countDownTimerWait<0)
    {
      // first target correct
      if (hitTest()==t.target)
      {
-       println("First Target Hit");
-       /////////////////////////////
-       /////////////////////////////
-       /////////////////////////////
-       // Add Choose 2 Conditionals here
-       /////////////////////////////
-       /////////////////////////////
-       
-       countDownTimerWait=30; //wait roughly 0.5 sec before allowing next trial
+       correct = true;
+       //println("First Target Hit");
+     } else {
+       correct = false;
      }
-     
    }
-   
-  
-  //if (light<=proxSensorThreshold && abs(z-9.8)>4 && countDownTimerWait<0) //possible hit event
-  //{
-  //  if (hitTest()==t.target)//check if it is the right target
-  //  {
-  //    //println(z-9.8); use this to check z output!
-  //    if (((z-9.8)>4 && t.action==0) || ((z-9.8)<-4 && t.action==1))
-  //    {
-  //      println("Right target, right z direction!");
-  //      trialIndex++; //next trial!
-  //    } else
-  //    {
-  //      if (trialIndex>0)
-  //        trialIndex--; //move back one trial as penalty!
-  //      println("right target, WRONG z direction!");
-  //    }
-  //    countDownTimerWait=30; //wait roughly 0.5 sec before allowing next trial
-  //  } 
-  //} else if (light<=proxSensorThreshold && countDownTimerWait<0 && hitTest()!=t.target)
-  //{ 
-  //  println("wrong round 1 action!"); 
-
-  //  if (trialIndex>0)
-  //    trialIndex--; //move back one trial as penalty!
-
-  //  countDownTimerWait=30; //wait roughly 0.5 sec before allowing next trial
-  //}
 }
+
+// light function
+void lightTapping() {  
+  
+  Target t = targets.get(trialIndex);
+  //print(light);
+  
+  if (!pressedDown && light < proxSensorThreshold) {
+    println("pressed down");
+    print(millis());
+    pressedDown = true;
+  } else if (pressedDown && light > proxSensorThreshold) {
+    println("lifted up - this is another tap");
+    print(millis());
+    taps += 1;
+    lastTap = millis();
+    pressedDown = false;
+  } else if (taps > 0 && !correct) { // IS THIS OKAY?
+    if (trialIndex > 0)
+        trialIndex--;
+  } else if (taps == 1 && millis() - lastTap > 500) {
+    if (t.action == 0) {
+      println("SINGLE TAP COMPLETE");
+      trialIndex++;
+    } else {
+      println("TAPPED ONCE INSTEAD OF TWICE");
+      if (trialIndex > 0)
+        trialIndex--;
+    }
+    //countDownTimerWait=30;
+    taps = 0;
+ } else if (taps == 2) {
+    if (t.action == 1) {
+      println("DOUBLE TAP COMPLETE");
+      trialIndex++;
+    } else {
+      println("TAPPED TWICE INSTEAD OF ONCE");
+      if (trialIndex > 0)
+        trialIndex--;
+    }
+    //countDownTimerWait=30;
+    taps = 0;
+ } 
+} 
+
 // Check if target choose 4 hit
 int hitTest() 
 {
