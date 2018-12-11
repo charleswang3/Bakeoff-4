@@ -10,7 +10,7 @@ boolean correct = false;
 
 // LIGHT VARIABLES
 boolean pressedDown = false;
-int taps = 0;
+boolean longTapped = false;
 int lastTap = 0;
 float light = 0; 
 float proxSensorThreshold = 10; //you will need to change this per your device. //you will need to change this per your device.
@@ -91,9 +91,9 @@ void draw() {
     text("Target #" + (targets.get(index).target)+1, width/2, 540/2);
   
     if (targets.get(index).action==0)
-      text("1", width/2, 150);
+      text("SHORT", width/2, 150);
     else
-      text("2", width/2, 150);
+      text("LONG", width/2, 150);
       
    
     // totally not drawing anything but oh well
@@ -117,22 +117,22 @@ void drawTriangles(int i)
     fill(0, 0, 0);
   
   if (i==0){
-    if (accelerometer.x < -2 && accelerometer.y >= -1 && accelerometer.y <= 1)
+    if (accelerometer.x < -3)
       fill(75, 229, 134);
     triangle(width/2, 70, width/2+50, 120, width/2-50, 120);
   }
   else if (i==1){
-    if (accelerometer.y > 2 && accelerometer.x >= -1 && accelerometer.x <= 1)
+    if (accelerometer.y > 3)
       fill(75, 229, 134);
     triangle(880-50, 500/2, 880-100, 500/2+50, 880-100, 500/2-50);
   }
   else if (i==2){
-    if (accelerometer.x > 2 && accelerometer.y >= -1 && accelerometer.y <= 1)
+    if (accelerometer.x > 3)
       fill(75, 229, 134);
     triangle(width/2, 500-70, width/2+50, 500-120, width/2-50, 500-120);
   }
   else{
-    if (accelerometer.y < -2 && accelerometer.x >= -1 && accelerometer.x <= 1)
+    if (accelerometer.y < -3)
       fill(75, 229, 134);
     triangle(20, 500/2, 70, 500/2+50, 70, 500/2-50);
   }
@@ -161,64 +161,67 @@ void onAccelerometerEvent(float x, float y, float z)
        //println("First Target Hit");
      } else {
        correct = false;
+       //print("current: " + hitTest());
+       //print("supposed to be: " + t.target);
      }
    }
 }
 
 // light function
 void lightTapping() {  
-  
   Target t = targets.get(trialIndex);
   //print(light);
-  
-  if (!pressedDown && light < proxSensorThreshold) {
+  if (longTapped == true && light > proxSensorThreshold) {
+    longTapped = false;
+  } else if (!longTapped && !pressedDown && light < proxSensorThreshold) {
     println("pressed down");
-    print(millis());
     pressedDown = true;
-  } else if (pressedDown && light > proxSensorThreshold) {
-    println("lifted up - this is another tap");
-    print(millis());
-    taps += 1;
     lastTap = millis();
-    pressedDown = false;
-  } else if (taps > 0 && !correct) { // IS THIS OKAY?
-    if (trialIndex > 0)
-        trialIndex--;
-  } else if (taps == 1 && millis() - lastTap > 500) {
-    if (t.action == 0) {
-      println("SINGLE TAP COMPLETE");
-      trialIndex++;
-    } else {
-      println("TAPPED ONCE INSTEAD OF TWICE");
-      if (trialIndex > 0)
-        trialIndex--;
-    }
-    //countDownTimerWait=30;
-    taps = 0;
- } else if (taps == 2) {
-    if (t.action == 1) {
-      println("DOUBLE TAP COMPLETE");
-      trialIndex++;
-    } else {
-      println("TAPPED TWICE INSTEAD OF ONCE");
-      if (trialIndex > 0)
-        trialIndex--;
-    }
-    //countDownTimerWait=30;
-    taps = 0;
- } 
-} 
+  } else if (!longTapped && pressedDown && light > proxSensorThreshold) {
+      println("lifted up - this is a short tap");
+      if (!correct) {
+        println("WRONG FIRST ROUND");
+        if (trialIndex > 0)
+          trialIndex--;
+      } else if (t.action == 0) {
+        println("SHORT TAP COMPLETE");
+        trialIndex++;
+      } else {
+        println("TAPPED SHORT INSTEAD OF LONG");
+        if (trialIndex > 0)
+          trialIndex--;
+      }
+      pressedDown = false;
+      lastTap = 0;
+    } else if (!longTapped && pressedDown && millis() - lastTap > 200) {
+      if (!correct) {
+        println("WRONG FIRST ROUND");
+        if (trialIndex > 0)
+          trialIndex--;
+      } else if (t.action == 1) {
+        println("LONG TAP COMPLETE");
+        trialIndex++;
+      } else {
+        println("TAPPED LONG INSTEAD OF SHORT");
+        if (trialIndex > 0)
+          trialIndex--;
+      }
+      lastTap = 0;
+      longTapped = true;
+      pressedDown = false;
+  }
+}  
 
 // Check if target choose 4 hit
 int hitTest() 
 {
-  if (accelerometer.x < 0 && accelerometer.y >= -1 && accelerometer.y <= 1)
+  if (accelerometer.x < -3)
     return 0;
-  else if (accelerometer.y > 0 && accelerometer.x >= -1 && accelerometer.x <= 1)
+  else if (accelerometer.y > 3)
     return 1;
-  else if (accelerometer.x > 0 && accelerometer.y >= -1 && accelerometer.y <= 1)
+  else if (accelerometer.x > 3)
     return 2;
-  else if (accelerometer.y < 0 && accelerometer.x >= -1 && accelerometer.x <= 1)
+  else if (accelerometer.y < -3)
     return 3;
   else   
     return -1;
